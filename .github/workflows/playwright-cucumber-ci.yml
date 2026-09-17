@@ -1,0 +1,44 @@
+name: Playwright Cucumber BDD Tests & Allure Report
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+
+    - name: Execute BDD Tests
+      env:
+        HEADLESS: 'true'
+      run: npm run test:bdd
+      continue-on-error: true
+
+    - name: Generate Allure Report
+      run: npm run allure:generate
+
+    - name: Upload Allure Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: allure-report
+        path: allure-report/
+        retention-days: 14
