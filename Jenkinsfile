@@ -6,11 +6,6 @@ pipeline {
         choice(name: 'BROWSER', choices: ['chromium', 'firefox', 'all'], description: 'Browser to execute tests')
     }
 
-    triggers {
-        // Daily night 2:00 AM-ku automatic-aa run aagum (Cron syntax)
-        cron('0 2 * * *')
-    }
-
     environment {
         PATH = "/opt/homebrew/bin:/usr/local/bin:${env.PATH}"
         CI = "true"
@@ -34,7 +29,6 @@ pipeline {
         stage('Run E2E Tests') {
             steps {
                 script {
-                    echo "Running tests on ${params.ENVIRONMENT} using ${params.BROWSER}..."
                     if (params.BROWSER == 'all') {
                         sh 'npx playwright test'
                     } else {
@@ -43,15 +37,25 @@ pipeline {
                 }
             }
         }
+
+        stage('Generate Allure Report') {
+            steps {
+                sh 'npx allure generate allure-results --clean -o allure-report'
+            }
+        }
     }
 
-   post {
+    post {
         always {
-            allure([
-                includeProperties: false,
-                jdk: '',
-                results: [[path: 'allure-results']]
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'allure-report',
+                reportFiles: 'index.html',
+                reportName: 'Allure E2E Report'
             ])
             archiveArtifacts artifacts: 'playwright-report/**, test-results/**', allowEmptyArchive: true
         }
     }
+}
