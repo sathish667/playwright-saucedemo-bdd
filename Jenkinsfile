@@ -45,18 +45,13 @@ pipeline {
         }
     }
 
-    post {
+   post {
         always {
-            // Jenkins UI-laye direct-aa Playwright HTML report-a publish pannum
-            publishHTML([
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'playwright-report',
-                reportFiles: 'index.html',
-                reportName: 'Playwright E2E Report'
+            allure([
+                includeProperties: false,
+                jdk: '',
+                results: [[path: 'allure-results']]
             ])
-            archiveArtifacts artifacts: 'test-results/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'playwright-report/**, test-results/**', allowEmptyArchive: true
         }
     }
-}
